@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .player-form {
+            display: none;
+            margin-top: 20px;
+        }
+        .player-list {
+            margin-top: 20px;
+        }
+        .player-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            position: relative;
+        }
+        .edit-btn, .delete-btn {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Team Roster</h1>
+    <button id="addPlayerBtn">Add Player</button>
+
+    <div class="player-form" id="playerForm">
+        <h2>Enter Player Details</h2>
+        <label for="playerName">Name:</label>
+        <input type="text" id="playerName"><br><br>
+        <label for="playerPosition">Position:</label>
+        <input type="text" id="playerPosition"><br><br>
+        <label for="dateOfJoin">Date of Joining:</label>
+        <input type="date" id="dateOfJoin"><br><br>
+        <button id="submitPlayerBtn">Submit</button>
+    </div>
+
+    <div class="player-list" id="playerList">
+        <h2>Players</h2>
+    </div>
+
+    <script>
+        document.getElementById('addPlayerBtn').addEventListener('click', function() {
+            document.getElementById('playerForm').style.display = 'block';
+            document.getElementById('submitPlayerBtn').dataset.editing = false;
+        });
+
+        document.getElementById('submitPlayerBtn').addEventListener('click', function() {
+            const name = document.getElementById('playerName').value;
+            const position = document.getElementById('playerPosition').value;
+            const dateOfJoin = document.getElementById('dateOfJoin').value;
+            const editing = document.getElementById('submitPlayerBtn').dataset.editing;
+
+            if (name && position && dateOfJoin) {
+                const player = { name, position, dateOfJoin };
+
+                if (editing === "true") {
+                    const editingIndex = document.getElementById('submitPlayerBtn').dataset.editingIndex;
+                    updatePlayer(editingIndex, player);
+                } else {
+                    savePlayer(player);
+                }
+
+                document.getElementById('playerForm').reset();
+                document.getElementById('playerForm').style.display = 'none';
+            } else {
+                alert('Please fill out all fields.');
+            }
+        });
+
+        function savePlayer(player) {
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            players.push(player);
+            localStorage.setItem('players', JSON.stringify(players));
+            renderPlayers();
+        }
+
+        function loadPlayers() {
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            players.forEach(player => addPlayerToDOM(player));
+        }
+
+        function addPlayerToDOM(player, index) {
+            const playerList = document.getElementById('playerList');
+            const playerItem = document.createElement('div');
+            playerItem.classList.add('player-item');
+            playerItem.innerHTML = `<strong>Name:</strong> ${player.name}<br>
+                                    <strong>Position:</strong> ${player.position}<br>
+                                    <strong>Date of Joining:</strong> ${player.dateOfJoin}
+                                    <span class="edit-btn" onclick="editPlayer(${index})">Edit</span>
+                                    <span class="delete-btn" onclick="deletePlayer(${index})">Delete</span>`;
+            playerList.appendChild(playerItem);
+        }
+
+        function renderPlayers() {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '<h2>Players</h2>';
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            players.forEach((player, index) => addPlayerToDOM(player, index));
+        }
+
+        function deletePlayer(index) {
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            players.splice(index, 1);
+            localStorage.setItem('players', JSON.stringify(players));
+            renderPlayers();
+        }
+
+        function editPlayer(index) {
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            const player = players[index];
+            document.getElementById('playerName').value = player.name;
+            document.getElementById('playerPosition').value = player.position;
+            document.getElementById('dateOfJoin').value = player.dateOfJoin;
+            document.getElementById('playerForm').style.display = 'block';
+            document.getElementById('submitPlayerBtn').dataset.editing = true;
+            document.getElementById('submitPlayerBtn').dataset.editingIndex = index;
+        }
+
+        function updatePlayer(index, updatedPlayer) {
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            players[index] = updatedPlayer;
+            localStorage.setItem('players', JSON.stringify(players));
+            renderPlayers();
+        }
+
+        // Load players when the page loads
+        window.onload = function() {
+            loadPlayers();
+        };
+    </script>
+</body>
+</html>
