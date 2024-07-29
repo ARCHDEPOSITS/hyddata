@@ -8,6 +8,36 @@
         body {
             font-family: Arial, sans-serif;
         }
+        .top-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .top-bar input, .top-bar button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .search-bar input {
+            width: 300px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+        }
+        .search-bar button {
+            padding: 10px;
+            border: none;
+            background-color: blue;
+            color: white;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
         .player-form {
             display: none;
             margin-top: 20px;
@@ -22,15 +52,26 @@
             border-radius: 5px;
             position: relative;
         }
-        .edit-btn, .delete-btn {
+        .edit-btn, .delete-btn, .blacklist-btn {
             margin-left: 10px;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
+    <div class="top-bar">
+        <button id="enterKeyBtn">Enter Key</button>
+        <input type="text" id="keyInput" placeholder="Enter version key...">
+    </div>
+
     <h1>Team Roster</h1>
-    <button id="addPlayerBtn">Add Player</button>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search player...">
+        <button id="searchBtn">Search</button>
+    </div>
+
+    <button id="addPlayerBtn" style="margin-top: 20px;">Add Player</button>
 
     <div class="player-form" id="playerForm">
         <h2>Enter Player Details</h2>
@@ -48,6 +89,19 @@
     </div>
 
     <script>
+        document.getElementById('enterKeyBtn').addEventListener('click', function() {
+            const versionFileContent = `version ver=1.0.0
+            {
+                key("alpko")
+            }`;
+            const keyMatch = versionFileContent.match(/key\("([^"]+)"\)/);
+            if (keyMatch) {
+                document.getElementById('keyInput').value = keyMatch[1];
+            } else {
+                alert('Key not found in version file');
+            }
+        });
+
         document.getElementById('addPlayerBtn').addEventListener('click', function() {
             document.getElementById('playerForm').style.display = 'block';
             document.getElementById('submitPlayerBtn').dataset.editing = false;
@@ -76,6 +130,17 @@
             }
         });
 
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            filterPlayers(query);
+        });
+
+        async function getUserIP() {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        }
+
         function savePlayer(player) {
             let players = JSON.parse(localStorage.getItem('players')) || [];
             players.push(player);
@@ -85,7 +150,7 @@
 
         function loadPlayers() {
             let players = JSON.parse(localStorage.getItem('players')) || [];
-            players.forEach(player => addPlayerToDOM(player));
+            players.forEach((player, index) => addPlayerToDOM(player, index));
         }
 
         function addPlayerToDOM(player, index) {
@@ -96,7 +161,8 @@
                                     <strong>Position:</strong> ${player.position}<br>
                                     <strong>Date of Joining:</strong> ${player.dateOfJoin}
                                     <span class="edit-btn" onclick="editPlayer(${index})">Edit</span>
-                                    <span class="delete-btn" onclick="deletePlayer(${index})">Delete</span>`;
+                                    <span class="delete-btn" onclick="deletePlayer(${index})">Delete</span>
+                                    <span class="blacklist-btn" onclick="blacklistIP()">Blacklist</span>`;
             playerList.appendChild(playerItem);
         }
 
@@ -132,9 +198,40 @@
             renderPlayers();
         }
 
-        // Load players when the page loads
+        function filterPlayers(query) {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '<h2>Players</h2>';
+            let players = JSON.parse(localStorage.getItem('players')) || [];
+            const filteredPlayers = players.filter(player => 
+                player.name.toLowerCase().includes(query) || 
+                player.position.toLowerCase().includes(query)
+            );
+            filteredPlayers.forEach((player, index) => addPlayerToDOM(player, index));
+        }
+
+        async function loadIPAndBlacklist() {
+            const ip = await getUserIP();
+            const blacklistedIPs = JSON.parse(localStorage.getItem('blacklistedIPs')) || [];
+
+            if (blacklistedIPs.includes(ip)) {
+                document.body.innerHTML = '<h1>You are blacklisted.</h1>';
+                return;
+            }
+
+            const ipElement = document.createElement('div');
+            ipElement.textContent = `Your IP: ${ip}`;
+            document.body.insertBefore(ipElement, document.body.firstChild);
+
+            window.blacklistIP = function() {
+                blacklistedIPs.push(ip);
+                localStorage.setItem('blacklistedIPs', JSON.stringify(blacklistedIPs));
+                alert('Your IP has been blacklisted.');
+            };
+        }
+
         window.onload = function() {
             loadPlayers();
+            loadIPAndBlacklist();
         };
     </script>
 </body>
