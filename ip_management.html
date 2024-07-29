@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .ip-list {
+            margin-top: 20px;
+        }
+        .ip-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            position: relative;
+        }
+        .unblacklist-btn {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>IP Management</h1>
+    <div class="ip-list" id="ipList">
+        <h2>Blacklisted IPs</h2>
+    </div>
+
+    <script>
+        function loadBlacklistedIPs() {
+            const ipList = document.getElementById('ipList');
+            const blacklistedIPs = JSON.parse(localStorage.getItem('blacklistedIPs')) || [];
+            ipList.innerHTML = '<h2>Blacklisted IPs</h2>';
+            blacklistedIPs.forEach(ip => addIPToDOM(ip));
+        }
+
+        function addIPToDOM(ip) {
+            const ipList = document.getElementById('ipList');
+            const ipItem = document.createElement('div');
+            ipItem.classList.add('ip-item');
+            ipItem.innerHTML = `<strong>IP:</strong> ${ip}
+                                <span class="unblacklist-btn" onclick="unblacklistIP('${ip}')">Unblacklist</span>`;
+            ipList.appendChild(ipItem);
+        }
+
+        function unblacklistIP(ip) {
+            let blacklistedIPs = JSON.parse(localStorage.getItem('blacklistedIPs')) || [];
+            blacklistedIPs = blacklistedIPs.filter(bip => bip !== ip);
+            localStorage.setItem('blacklistedIPs', JSON.stringify(blacklistedIPs));
+            loadBlacklistedIPs();
+        }
+
+        window.onload = function() {
+            loadBlacklistedIPs();
+        };
+    </script>
+</body>
+</html>
