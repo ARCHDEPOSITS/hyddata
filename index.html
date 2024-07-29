@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Player</title>
+    <title>Team Roster</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             justify-content: center;
             margin-top: 20px;
         }
-        .top-bar input, .top-bar button {
+        .top-bar button {
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -52,7 +52,7 @@
             border-radius: 5px;
             position: relative;
         }
-        .edit-btn, .delete-btn, .blacklist-btn {
+        .edit-btn, .delete-btn {
             margin-left: 10px;
             cursor: pointer;
         }
@@ -61,7 +61,6 @@
 <body>
     <div class="top-bar">
         <button id="enterKeyBtn">Enter Key</button>
-        <input type="text" id="keyInput" placeholder="Enter version key...">
     </div>
 
     <h1>Team Roster</h1>
@@ -96,7 +95,13 @@
             }`;
             const keyMatch = versionFileContent.match(/key\("([^"]+)"\)/);
             if (keyMatch) {
-                document.getElementById('keyInput').value = keyMatch[1];
+                const key = keyMatch[1];
+                const inputKey = prompt("Enter the key:");
+                if (inputKey === key) {
+                    window.location.href = 'ip_management.html';
+                } else {
+                    alert('Incorrect key.');
+                }
             } else {
                 alert('Key not found in version file');
             }
@@ -135,12 +140,6 @@
             filterPlayers(query);
         });
 
-        async function getUserIP() {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            return data.ip;
-        }
-
         function savePlayer(player) {
             let players = JSON.parse(localStorage.getItem('players')) || [];
             players.push(player);
@@ -161,8 +160,7 @@
                                     <strong>Position:</strong> ${player.position}<br>
                                     <strong>Date of Joining:</strong> ${player.dateOfJoin}
                                     <span class="edit-btn" onclick="editPlayer(${index})">Edit</span>
-                                    <span class="delete-btn" onclick="deletePlayer(${index})">Delete</span>
-                                    <span class="blacklist-btn" onclick="blacklistIP()">Blacklist</span>`;
+                                    <span class="delete-btn" onclick="deletePlayer(${index})">Delete</span>`;
             playerList.appendChild(playerItem);
         }
 
@@ -209,29 +207,8 @@
             filteredPlayers.forEach((player, index) => addPlayerToDOM(player, index));
         }
 
-        async function loadIPAndBlacklist() {
-            const ip = await getUserIP();
-            const blacklistedIPs = JSON.parse(localStorage.getItem('blacklistedIPs')) || [];
-
-            if (blacklistedIPs.includes(ip)) {
-                document.body.innerHTML = '<h1>You are blacklisted.</h1>';
-                return;
-            }
-
-            const ipElement = document.createElement('div');
-            ipElement.textContent = `Your IP: ${ip}`;
-            document.body.insertBefore(ipElement, document.body.firstChild);
-
-            window.blacklistIP = function() {
-                blacklistedIPs.push(ip);
-                localStorage.setItem('blacklistedIPs', JSON.stringify(blacklistedIPs));
-                alert('Your IP has been blacklisted.');
-            };
-        }
-
         window.onload = function() {
             loadPlayers();
-            loadIPAndBlacklist();
         };
     </script>
 </body>
